@@ -18,28 +18,28 @@ import com.example.uploadPdf.dto.UploadResponseBody;
 import com.example.uploadPdf.dto.UploadResponseDataBody;
 
 import feign.FeignException;
+import java.util.UUID;
 
 @Component
 public class DocumentoRestImpl implements ConsultaDocumento {
 
-    private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(DocumentoRestImpl.class);
+   private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(DocumentoRestImpl.class);
 
-    @Autowired
-    private final UploadClient client;
-    private final STSHeaders stsHeaders;
+   @Autowired
+   private final UploadClient client;
+   private final STSHeaders stsHeaders;
 
-    public DocumentoRestImpl(UploadClient client, STSHeaders stsHeaders) {
+   public DocumentoRestImpl(UploadClient client, STSHeaders stsHeaders) {
       this.client = client;
       this.stsHeaders = stsHeaders;
-    }
+   }
 
-
-    @Override
-    public UploadResponseBody uploadDocumento(String idArquivo,
-                                                  byte[] arquivo, 
-                                                  String nomeArquivo) throws ConsultaDocumentoException {
-    String correlationId = MDC.get("correlationId");
-    LOGGER.debug("Iniciando upload de documento {}", idArquivo);
+   @Override
+   public UploadResponseBody uploadDocumento(String idArquivo,
+                                             byte[] arquivo,
+                                             String nomeArquivo) throws ConsultaDocumentoException {
+      String correlationId = UUID.randomUUID().toString();
+      LOGGER.debug("Iniciando upload de documento {}", idArquivo);
 
     try {
         // Separação de responsabilidades: criar um método separado para fazer o upload
@@ -93,7 +93,8 @@ public class DocumentoRestImpl implements ConsultaDocumento {
             LOGGER.debug("Upload de documento {} bem-sucedido", idArquivo);
         } else {
             // Registrar mensagem de erro se a resposta não foi bem-sucedida
-            String mensagemErro = String.format("Erro ao fazer upload de documento %s: %s", idArquivo, response.getStatusCode());
+           String mensagemErro = String.format("Erro ao fazer upload de documento %s: %s ;; correlationId: %s",
+                 idArquivo, response.getStatusCode(), correlationId);
           LOGGER.error(mensagemErro);
           throw new ConsultaDocumentoException(mensagemErro, idArquivo);
       }

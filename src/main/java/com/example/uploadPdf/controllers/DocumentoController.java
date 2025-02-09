@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.example.uploadPdf.exception.ConsultaDocumentoException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -16,8 +17,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 public class DocumentoController {
 
    private static final Logger LOGGER = LoggerFactory.getLogger(DocumentoController.class);
+   private static final int MAX_FILE_SIZE = 1024 * 1024 * 10; // 10MB
+   private static final byte[] PDF_SIGNATURE = new byte[] {0x25, 0x50, 0x44, 0x46};
+
    @Autowired
    private final DocumentoService documentoService;
+
    @Autowired
    public DocumentoController(DocumentoService documentoService) {
       this.documentoService = documentoService;
@@ -30,7 +35,6 @@ public class DocumentoController {
          @RequestHeader("nome_arquivo") String nomeArquivo) {
       LOGGER.info("[DEBUG] Dados de entrada para upload de documentos {}", arquivoId);
 
-      int MAX_FILE_SIZE = 1024 * 1024 * 10; // 10MB
       if (request.length > MAX_FILE_SIZE) {
          LOGGER.error("Tamanho do arquivo excede o limite");
          return errorResponse("Tamanho do arquivo excede o limite permitido de 10MB.");
@@ -41,23 +45,23 @@ public class DocumentoController {
          return errorResponse("Arquivo inválido. Certifique-se de que é um PDF e que tem um tamanho válido.");
       }
 
+
       try {
          UploadResponseBody uploadResponseBody = documentoService.uploadDocumento(arquivoId, request, nomeArquivo);
          return ResponseEntity.ok(uploadResponseBody);
-      } catch (Exception e) {
+      } catch (ConsultaDocumentoException e) {
          LOGGER.error("Erro ao realizar upload do arquivo", e);
          return errorResponse("Erro interno ao realizar upload do arquivo.");
       }
    }
 
    private boolean isValidFile(byte[] request) {
-      return request.length > 0 && startsWithPdfSignature(request) && request.length <= 1024 * 1024 * 10;
+      return request.length > PDF_SIGNATURE.length && startsWithPdfSignature(request) && request.length <= MAX_FILE_SIZE;
    }
 
    private boolean startsWithPdfSignature(byte[] request) {
-      byte[] pdfSignature = new byte[] {0x25, 0x50, 0x44, 0x46};
-      for (int i = 0; i < pdfSignature.length; i++) {
-         if (request[i] != pdfSignature[i]) {
+      for (int i = 0; i < PDF_SIGNATURE.length; i++) {
+         if (request[i] != PDF_SIGNATURE[i]) {
             return false;
          }
       }

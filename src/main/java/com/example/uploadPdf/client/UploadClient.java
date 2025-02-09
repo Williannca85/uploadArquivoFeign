@@ -12,7 +12,7 @@ import com.example.uploadPdf.config.FeignConfig;
 import com.example.uploadPdf.dto.UploadResponseBody;
 import com.example.uploadPdf.dto.UploadResponseDataBody;
 
-@FeignClient(name = "Uplad-Client", configuration = FeignConfig.class)
+@FeignClient(name = "Upload-Client", url = "http://localhost:20002", configuration = FeignConfig.class)
 public interface UploadClient {
 
   @PostMapping(value = "conteudos/x1/arquivos/{id_arquivo}/uploadDocumento")

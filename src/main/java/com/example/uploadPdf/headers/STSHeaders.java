@@ -38,15 +38,15 @@ public class STSHeaders {
       }
 
       HttpHeaders httpHeaders = new HttpHeaders();
-      httpHeaders.set(HEADER_CONTENT_TYPE, "application/octet-stream");
-      httpHeaders.set(HEADER_APP_ID, "eaf784ab-5ae6-41d4-9007-e08957256f50");
-      httpHeaders.set(HEADER_API_ID, UUID.randomUUID().toString());
-      httpHeaders.set(HEADER_FLOW_ID, "f436b711-49ac-4e41-aab1-b08241604c9b");
-      httpHeaders.set(HEADER_API_KEY, "123");
-      httpHeaders.set(HEADER_CORRELATION_ID, UUID.randomUUID().toString());
-      httpHeaders.set(NOME_ARQUIVO, nomeArquivo);
-      httpHeaders.set(HEADER_X_CONTENT_LENGTH, String.valueOf(xContentLength));
-      httpHeaders.set(HEADER_TRANSFER_ENCODING, "chunked");
+      httpHeaders.set("Content-Type", "application/octet-stream");
+      httpHeaders.set("appid", "eaf784ab-5ae6-41d4-9007-e08957256f50");
+      httpHeaders.set("x-apigw-api-id", UUID.randomUUID().toString());
+      httpHeaders.set("flowID", "f436b711-49ac-4e41-aab1-b08241604c9b");
+      httpHeaders.set("apikey", "123");
+      httpHeaders.set("correlationId", UUID.randomUUID().toString());
+      httpHeaders.set("nome_arquivo", nomeArquivo);
+      httpHeaders.set("x-content-length", String.valueOf(xContentLength));
+      httpHeaders.set("Transfer-Encoding", "chunked");
       LOGGER.info("HttpHeaders: " + httpHeaders);
       LOGGER.debug("HttpHeaders: " + httpHeaders);
       return httpHeaders;
