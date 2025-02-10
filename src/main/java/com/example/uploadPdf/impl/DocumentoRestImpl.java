@@ -3,7 +3,6 @@ package com.example.uploadPdf.impl;
 import java.util.Base64;
 
 import org.springframework.beans.factory.annotation.Autowired;
-
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.http.HttpHeaders;
@@ -18,6 +17,8 @@ import com.example.uploadPdf.dto.UploadResponseBody;
 import com.example.uploadPdf.dto.UploadResponseDataBody;
 
 import feign.FeignException;
+import net.logstash.logback.argument.StructuredArguments;
+
 import java.util.UUID;
 
 @Component
@@ -39,44 +40,51 @@ public class DocumentoRestImpl implements ConsultaDocumento {
                                              byte[] arquivo,
                                              String nomeArquivo) throws ConsultaDocumentoException {
       String correlationId = UUID.randomUUID().toString();
-      LOGGER.debug("Iniciando upload de documento {}", idArquivo);
+      MDC.put("correlationId", correlationId);
 
-    try {
-        // Separação de responsabilidades: criar um método separado para fazer o upload
-        ResponseEntity<UploadResponseDataBody> response = fazerUpload(idArquivo,
-                                                                          arquivo, 
-                                                                          nomeArquivo);
+      LOGGER.debug("Iniciando upload de documento {}",
+            StructuredArguments.kv("idArquivo", idArquivo),
+            StructuredArguments.kv("correlationId", correlationId));
 
-        // Verificar a resposta
-        verificarResposta(response, idArquivo, correlationId);
+      try {
+         // Separação de responsabilidades: criar um método separado para fazer o upload
+         ResponseEntity<UploadResponseDataBody> response = fazerUpload(idArquivo, arquivo, nomeArquivo);
 
-        // Retornar o corpo da resposta
-        return response.getBody().getData();
-    } catch (FeignException e) {
-        // Tratamento de erros: capturar erros e registrar mensagens de erro
-        String mensagemErro = String.format("Erro ao fazer upload de documento %s: %s  ;; correlationId: %s",
-                                            idArquivo, e.getMessage());
-        LOGGER.error(mensagemErro, e);
-        throw new ConsultaDocumentoException(mensagemErro, e, idArquivo);
-    }
-}
+         // Verificar a resposta
+         verificarResposta(response, idArquivo, correlationId);
+
+         // Retornar o corpo da resposta
+         return response.getBody().getData();
+      } catch (FeignException e) {
+         // Tratamento de erros: capturar erros e registrar mensagens de erro
+         String mensagemErro = String.format("Erro ao fazer upload de documento %s: %s",
+               idArquivo, e.getMessage());
+         LOGGER.error(mensagemErro,
+               StructuredArguments.kv("idArquivo", idArquivo),
+               StructuredArguments.kv("correlationId", correlationId), e);
+         throw new ConsultaDocumentoException(mensagemErro, e, idArquivo);
+      }
+   }
 
    private ResponseEntity<UploadResponseDataBody> fazerUpload(String idArquivo,
                                                               byte[] arquivo,
                                                               String nomeArquivo) throws ConsultaDocumentoException {
       // Validar os parâmetros de entrada
       if (idArquivo == null || idArquivo.isEmpty()) {
-         LOGGER.error("ID do arquivo não pode ser nulo ou vazio");
+         LOGGER.error("ID do arquivo não pode ser nulo ou vazio",
+               StructuredArguments.kv("idArquivo", idArquivo));
          throw new ConsultaDocumentoException("ID do arquivo não pode ser nulo ou vazio", idArquivo);
       }
 
       if (arquivo == null || arquivo.length == 0) {
-         LOGGER.error("Arquivo não pode ser nulo ou vazio");
+         LOGGER.error("Arquivo não pode ser nulo ou vazio",
+               StructuredArguments.kv("idArquivo", idArquivo));
          throw new ConsultaDocumentoException("Arquivo não pode ser nulo ou vazio", idArquivo);
       }
 
       if (nomeArquivo == null || nomeArquivo.isEmpty()) {
-         LOGGER.error("Nome do arquivo não pode ser nulo ou vazio");
+         LOGGER.error("Nome do arquivo não pode ser nulo ou vazio",
+               StructuredArguments.kv("idArquivo", idArquivo));
          throw new ConsultaDocumentoException("Nome do arquivo não pode ser nulo ou vazio", idArquivo);
       }
 
@@ -87,17 +95,20 @@ public class DocumentoRestImpl implements ConsultaDocumento {
       return client.postUploadDocumentos(idArquivo, arquivo, headers);
    }
 
-  private void verificarResposta(ResponseEntity<UploadResponseDataBody> response, String idArquivo, String correlationId) {
-        // Verificar se a resposta foi bem-sucedida
-        if (response.getStatusCode().is2xxSuccessful()) {
-            LOGGER.debug("Upload de documento {} bem-sucedido", idArquivo);
-        } else {
-            // Registrar mensagem de erro se a resposta não foi bem-sucedida
-           String mensagemErro = String.format("Erro ao fazer upload de documento %s: %s ;; correlationId: %s",
-                 idArquivo, response.getStatusCode(), correlationId);
-          LOGGER.error(mensagemErro);
-          throw new ConsultaDocumentoException(mensagemErro, idArquivo);
+   private void verificarResposta(ResponseEntity<UploadResponseDataBody> response, String idArquivo, String correlationId) {
+      // Verificar se a resposta foi bem-sucedida
+      if (response.getStatusCode().is2xxSuccessful()) {
+         LOGGER.debug("Upload de documento {} bem-sucedido",
+               StructuredArguments.kv("idArquivo", idArquivo),
+               StructuredArguments.kv("correlationId", correlationId));
+      } else {
+         // Registrar mensagem de erro se a resposta não foi bem-sucedida
+         String mensagemErro = String.format("Erro ao fazer upload de documento %s: %s",
+               idArquivo, response.getStatusCode());
+         LOGGER.error(mensagemErro,
+               StructuredArguments.kv("idArquivo", idArquivo),
+               StructuredArguments.kv("correlationId", correlationId));
+         throw new ConsultaDocumentoException(mensagemErro, idArquivo);
       }
-  }
-
+   }
 }
